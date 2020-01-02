@@ -1,0 +1,40 @@
+library(Seurat)
+library(clusterProfiler)
+library(org.Mm.eg.db)
+library(dplyr)
+library(AnnotationDbi)
+library(stringr)
+dir_path = 'e:/Seurat WD/Rdata/neu_LPS/'
+file_list = dir(path = dir_path)
+for (i in file_list) {
+  file_path = file.path(dir_path,i)
+  tmp_var <-  read.csv(file =file_path,row.names = 1,header = TRUE,sep = ',')
+  assign(substr(i,12,15),tmp_var)
+}
+rm(i,tmp_var)
+names(LPS1) <- paste("batch1","sti",names(LPS1),sep = '_')
+names(LPS2) <- paste("batch2","sti",names(LPS2),sep = '_')
+names(LPS3) <- paste("batch3","sti",names(LPS3),sep = '_')
+names(SA01) <- paste("batch1","ctl",names(SA01),sep = '_')
+names(SA02) <- paste("batch2","ctl",names(SA02),sep = '_')
+names(SA03) <- paste("batch3","ctl",names(SA03),sep = '_')
+neu_lps = cbind(LPS1,LPS2,LPS3,SA01,SA02,SA03)
+#将6个样本的数据整合到一个表达矩阵
+symb_temp = mapIds(org.Mm.eg.db,keys = row.names(neu_lps),column = "SYMBOL",keytype = "ENSEMBL")
+symb_temp = as.data.frame(symb_temp)
+if (all(row.names(neu_lps)== row.names(symb_temp))){
+  neu_lps$geneid = symb_temp$symb_temp
+}else
+ {
+   print("基因ID转化有误")
+ }
+neu_lps = na.omit(neu_lps)
+neu_lps <- neu_lps %>% group_by(geneid) %>% summarise_all(funs(sum))#这是一条重要语句，将重复的基因加起来算一个
+row.names(neu_lps) = row.names(neu_lps$geneid)
+neu_lps$geneid = NULL
+
+t <- group_by(symb_temp,SYMBOL)
+b <- summarise_all(t,sum)
+
+rownames(counts_Sweden) <-counts_Sweden$gene
+counts_Sweden$gene <- NULL
