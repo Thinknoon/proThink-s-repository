@@ -1,0 +1,145 @@
+import pygame
+import random
+import sys
+import time
+from pygame.sprite import Sprite
+
+window_width = 800
+window_height = 600
+top = 0
+color_white = pygame.color.Color('white')
+color_green = pygame.color.Color('#000000')
+
+class BaseItem(Sprite):
+    def __init__(self,color,width,height,):
+        pygame.sprite.Sprite.__init__(self)
+    
+class Tank(BaseItem):
+    def __init__(self, left, top, speed):
+        self.direction = 'U'
+        self.images = {
+            'U': pygame.image.load('tank_img/enemy1U.gif'),
+            'D': pygame.image.load('tank_img/enemy1D.gif'),
+            'L': pygame.image.load('tank_img/enemy1L.gif'),
+            'R': pygame.image.load('tank_img/enemy1R.gif')
+        }
+        self.direction = RandomDirection()
+        self.image = self.images[self.direction]
+        self.rect = self.image.get_rect()
+        self.rect.left = left
+        self.rect.top = top
+        self.speed = speed
+        self.step = 30
+    
+def RandomDirection():
+    direction = ['U','D','L','R'][random.randint(0,3)]
+    return direction
+        
+
+def add_Tank():
+    for i in range(10-len(Tanklist)):
+        left = random.randint(0,750)
+        speed = random.randint(1,2)
+        tank_temp = Tank(left,top, speed)
+        Tanklist.append(tank_temp)
+def display_all_tank():
+    for i in Tanklist:
+     screen.blit(i.image,i.rect)
+
+def tank_move():
+    for i in Tanklist:
+        if i.direction == 'U':
+            i.rect.top -= i.speed
+            if i.rect.top <= 0:
+                i.rect.top = 0
+        elif i.direction == 'D':
+            i.rect.top += i.speed
+            if i.rect.top >= 540:
+                i.rect.top =540
+        elif i.direction == 'L':
+            i.rect.left -= i.speed
+            if i.rect.left <= 0:
+                i.rect.left = 0
+        elif i.direction == 'R':
+            i.rect.left += i.speed
+            if i.rect.left >= 740:
+                i.rect.left = 740
+
+def fire():
+    for i in Tanklist:
+        if random.randint(0,100) < 5:
+            bullet_direction = i.direction
+            if bullet_direction == 'U':
+                bullet_rect_left = i.rect.left + 20
+                bullet_rect_top = i.rect.top - 20
+            elif bullet_direction == 'D':
+                bullet_rect_left = i.rect.left + 20
+                bullet_rect_top = i.rect.top + 80
+            elif bullet_direction == 'R':
+                bullet_rect_left = i.rect.left + 100
+                bullet_rect_top = i.rect.top + 20
+            elif bullet_direction == 'L':
+                bullet_rect_left = i.rect.left - 20
+                bullet_rect_top = i.rect.top + 20
+            Bulletlist.append([bullet_rect_top,bullet_rect_left,bullet_direction])
+
+def Bullet_move():
+    for i in Bulletlist:
+        if i[2] == 'U':
+            i[0] -= 30
+            if i[0] < 0:
+                Bulletlist.remove(i)
+        elif i[2] == 'D':
+            i[0] += 30
+            if i[0] > 600:
+                Bulletlist.remove(i)
+        elif i[2] == 'L':
+            i[1] -= 30
+            if i[1] < 0:
+                Bulletlist.remove(i)
+        elif i[2] == 'R':
+            i[1] += 30
+            if i[1] > 800:
+                Bulletlist.remove(i)
+def Bullet_display():
+    bullet_image = pygame.image.load('tank_img/tankmissile.gif')
+    for i in Bulletlist:
+        screen.blit(bullet_image,(i[1],i[0]))
+
+def explode():
+    for i in Tanklist:
+        for j in Bulletlist:
+            if (j[0] >= i.rect.top) & (j[0] <= i.rect.top + 60) & (j[1] >= i.rect.left) & (j[1] <= i.rect.left + 60):
+                bomb = pygame.image.load('tank_img/blast7.gif')
+                screen.blit(bomb,(i.rect.left,i.rect.top))
+                pygame.mixer.init()
+                pygame.mixer.music.load('tank_img/hit.wav')
+                pygame.mixer.music.play()
+                if j in Bulletlist:
+                    Bulletlist.remove(j)
+                if i in Tanklist:
+                    Tanklist.remove(i)
+                time.sleep(0.05)
+
+Tanklist = []
+Bulletlist = []
+pygame.display.init()
+while True:
+    screen = pygame.display.set_mode((window_width,window_height))
+    pygame.display.set_caption('坦克大战')
+    add_Tank()
+    for tank in Tanklist:
+        if tank.step <= 0:
+            tank.direction = RandomDirection()
+            tank.image = tank.images[tank.direction]
+            tank.step = 30
+        else:
+            tank_move()
+            tank.step -= 1
+    display_all_tank()
+    fire()
+    Bullet_move()
+    explode()
+    Bullet_display()
+    pygame.display.update()
+    time.sleep(0.05)
